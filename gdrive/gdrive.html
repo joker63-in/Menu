@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Play GDrive - Modern</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-image: url("background.png");
+      --primary-text: #ffffff;
+      --secondary-text: #cccccc;
+      --bg-blur: rgba(20, 20, 30, 0.6);
+      --bg-blur-heavy: rgba(10, 10, 20, 0.75);
+      --accent-color: #00aaff;
+      --focus-shadow: 0 0 0 3px rgba(0, 170, 255, 0.6);
+      --border-radius: 12px;
+      --font-family: 'Poppins', Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding-bottom: 80px;
+      font-family: var(--font-family);
+      color: var(--primary-text);
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                  var(--bg-image) no-repeat center center fixed;
+      background-size: cover;
+    }
+    
+    header {
+      text-align: center;
+      padding: 30px 20px;
+    }
+    header img {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-color);
+      box-shadow: 0 4px 15px rgba(0, 170, 255, 0.3);
+    }
+    header h3 {
+      margin-top: 15px;
+      font-weight: 600;
+      color: var(--primary-text);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .container, .player, .playlist {
+      margin: 20px;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      background: var(--bg-blur);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+    .input-group {
+      flex-grow: 1;
+      display: flex;
+      min-width: 250px;
+    }
+    .controls input {
+      width: 100%;
+      padding: 12px 20px;
+      border-radius: 50px 0 0 50px;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.1);
+      color: var(--primary-text);
+      font-size: 1em;
+      transition: all 0.3s;
+    }
+    .controls input:focus {
+      outline: none;
+      background: rgba(255,255,255,0.2);
+      border-color: var(--accent-color);
+      box-shadow: var(--focus-shadow);
+    }
+    .controls input::placeholder { color: var(--secondary-text); }
+
+    .btn {
+      padding: 12px;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      background: rgba(0,0,0,0.4);
+      color: var(--primary-text);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:hover { background: rgba(255,255,255,0.2); }
+    .btn:focus-visible {
+      outline: none;
+      background: rgba(255,255,255,0.2);
+      box-shadow: var(--focus-shadow);
+      z-index: 10;
+    }
+    .btn svg { width: 20px; height: 20px; fill: currentColor; }
+    
+    .btn-add {
+        border-radius: 0 50px 50px 0;
+        margin-left: -2px;
+    }
+    .btn-group {
+        display: flex;
+    }
+    .btn-group .btn {
+        border-radius: 50px;
+        padding: 12px 15px;
+        gap: 8px;
+    }
+
+    .player {
+      position: relative;
+      padding-top: 56.25%; 
+      padding-left: 0;
+      padding-right: 0;
+      padding-bottom: 0;
+      background: var(--bg-blur-heavy);
+      overflow: hidden;
+      margin-left: 10px;
+      margin-right: 10px;
+      z-index: 99; /* --- PERBAIKAN: Menaikkan nilai z-index --- */
+    }
+    .player iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
+
+    .playlist {
+      background: var(--bg-blur-heavy);
+    }
+    .playlist h3 {
+      margin-top: 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 8px;
+      transition: background-color 0.3s;
+      cursor: pointer;
+    }
+    .playlist-item:focus-visible { outline: none; }
+    .playlist-item.selected, .playlist-item:focus-visible, .playlist-item:hover {
+      background-color: rgba(0, 170, 255, 0.2);
+      box-shadow: inset 3px 0 0 0 var(--accent-color);
+    }
+    .playlist-item img {
+      width: 80px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .playlist-item .title {
+      flex-grow: 1;
+      font-size: 1em;
+      font-weight: 500;
+    }
+    .playlist-item .actions {
+      display: flex;
+      gap: 5px;
+    }
+    .playlist-item .actions .btn {
+        background: transparent;
+        border-radius: 50%;
+        color: var(--secondary-text);
+    }
+    .playlist-item .actions .btn:hover {
+        background: rgba(0, 170, 255, 0.3);
+        color: var(--primary-text);
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0; left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 12px 0;
+      background: var(--bg-blur);
+      backdrop-filter: blur(8px);
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .container, .playlist { margin: 10px; padding: 15px; }
+      header img { width: 80px; height: 80px; }
+      .controls { flex-direction: column; }
+      .input-group { width: 100%; }
+      .btn-group { justify-content: center; width: 100%;}
+
+      .player {
+        margin-left: 5px;
+        margin-right: 5px;
+        padding: 56.25% 0 0 0; 
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="logo.png" alt="Logo">
+    <h3>Play GDrive</h3>
+  </header>
+
+  <div class="container">
+    <div class="controls">
+      <div class="input-group">
+        <input id="driveInput" type="text" placeholder="Tempel link share Google Drive">
+        <button class="btn btn-add" onclick="addVideo()" aria-label="Tambah Video">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+      </div>
+      <div class="btn-group">
+        <button class="btn" onclick="exportPlaylist()" aria-label="Export Playlist">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Export
+        </button>
+        <button class="btn" onclick="importPlaylist()" aria-label="Import Playlist">
+          <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+          Import
+        </button>
+        <button class="btn" onclick="loadPlaylistFromFile()" aria-label="Muat Playlist dari File">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Muat
+        </button>
+        <button class="btn" onclick="togglePlayer()" id="toggleBtn" style="display:none;">Sembunyikan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="player" class="player" style="display:none;">
+    <iframe id="iframe" allow="autoplay; fullscreen" allowfullscreen></iframe>
+  </div>
+
+  <div class="playlist">
+    <h3>Playlist</h3>
+    <div id="playlistItems"></div>
+  </div>
+
+  <footer>
+    <div id="footerDate"></div>
+    <div>meekymouse team project</div>
+  </footer>
+
+  <script>
+    let playlist = [];
+    let playerVisible = true;
+    let selectedIndex = -1;
+
+    function savePlaylist() {
+      localStorage.setItem('gdrivePlaylist', JSON.stringify(playlist));
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem('gdrivePlaylist');
+      if (saved) {
+        playlist = JSON.parse(saved);
+        renderPlaylist();
+      } else {
+        loadPlaylistFromFile(false);
+      }
+    }
+
+    function extractId(url) {
+      url = url.trim();
+      let m = url.match(/\/file\/d\/([A-Za-z0-9_-]{20,})/);
+      if (m) return m[1];
+      m = url.match(/[?&]id=([A-Za-z0-9_-]{20,})/);
+      if (m) return m[1];
+      if (/^[A-Za-z0-9_-]{20,}$/.test(url)) return url;
+      return null;
+    }
+
+    function addVideo() {
+      let raw = document.getElementById("driveInput").value;
+      if (!raw) return;
+      let id = extractId(raw);
+      if (!id) { alert("Link share tidak valid!"); return; }
+      let title = prompt("Masukkan judul video:", "Video Baru");
+      if (title === null) return;
+      let thumb = prompt("Masukkan URL thumbnail (opsional):", "");
+      playlist.push({id, title, thumb});
+      renderPlaylist();
+      savePlaylist();
+      document.getElementById("driveInput").value = "";
+    }
+
+    function playVideo(id) {
+      let link = "https://drive.google.com/file/d/" + id + "/preview";
+      document.getElementById("iframe").src = link;
+      const playerDiv = document.getElementById("player");
+      playerDiv.style.display = "block";
+      playerDiv.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById("toggleBtn").style.display = "flex";
+      playerVisible = true;
+      document.getElementById("toggleBtn").textContent = "Sembunyikan";
+    }
+
+    function togglePlayer() {
+      const player = document.getElementById("player");
+      const btn = document.getElementById("toggleBtn");
+      playerVisible = !playerVisible;
+      if (playerVisible) {
+        player.style.display = "block";
+        btn.textContent = "Sembunyikan";
+      } else {
+        player.style.display = "none";
+        btn.textContent = "Tampilkan";
+      }
+    }
+
+    function renderPlaylist() {
+      let container = document.getElementById("playlistItems");
+      container.innerHTML = "";
+      if (playlist.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color: var(--secondary-text);">Playlist kosong. Tambahkan video untuk memulai.</p>`;
+        return;
+      }
+
+      playlist.forEach((item, idx) => {
+        let div = document.createElement("div");
+        div.className = "playlist-item";
+        div.id = `item-${idx}`;
+        div.tabIndex = 0;
+        
+        div.onclick = (e) => {
+            if (!e.target.closest('.actions')) {
+                playVideo(item.id);
+                selectedIndex = idx;
+                updateSelection();
+            }
+        };
+
+        div.onfocus = () => {
+            selectedIndex = idx;
+            updateSelection();
+        };
+
+        div.innerHTML = `
+          <img src="${item.thumb || 'https://via.placeholder.com/80x45?text=No+Image'}">
+          <span class="title">${item.title}</span>
+          <div class="actions">
+            <button class="btn" onclick="editVideo(${idx}, event)" aria-label="Edit Judul">
+              <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </button>
+            <button class="btn" onclick="deleteVideo(${idx}, event)" aria-label="Hapus Video">
+              <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      updateSelection();
+    }
+    
+    function updateSelection() {
+        document.querySelectorAll('.playlist-item').forEach((item, idx) => {
+            if (idx === selectedIndex) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    function editVideo(idx, event) {
+      event.stopPropagation();
+      let newTitle = prompt("Edit judul:", playlist[idx].title);
+      if (newTitle !== null && newTitle.trim() !== "") playlist[idx].title = newTitle;
+      let newThumb = prompt("Edit URL thumbnail:", playlist[idx].thumb || "");
+      if (newThumb !== null) playlist[idx].thumb = newThumb;
+      renderPlaylist();
+      savePlaylist();
+    }
+
+    function deleteVideo(idx, event) {
+      event.stopPropagation();
+      if (confirm(`Hapus "${playlist[idx].title}" dari playlist?`)) {
+        playlist.splice(idx, 1);
+        if (selectedIndex >= playlist.length) {
+          selectedIndex = playlist.length - 1;
+        }
+        renderPlaylist();
+        savePlaylist();
+      }
+    }
+
+    function exportPlaylist() {
+      if (playlist.length === 0) { alert("Playlist kosong!"); return; }
+      let data = JSON.stringify(playlist, null, 2);
+      let blob = new Blob([data], {type: "application/json"});
+      let a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "gdrive_playlist.json";
+      a.click();
+    }
+
+    function importPlaylist() {
+      let input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json,application/json";
+      input.onchange = e => {
+        let file = e.target.files[0];
+        let reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const importedData = JSON.parse(ev.target.result);
+            if (Array.isArray(importedData)) {
+                playlist = importedData;
+                renderPlaylist();
+                savePlaylist();
+                alert("Playlist berhasil diimpor!");
+            } else { alert("File JSON tidak valid!"); }
+          } catch(e) { alert("Gagal memuat file playlist!"); }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    function loadPlaylistFromFile(showConfirmation = true) {
+      if (showConfirmation) {
+        if (!confirm("Ini akan mengganti playlist Anda saat ini dengan konten dari playlist.json. Lanjutkan?")) {
+          return;
+        }
+      }
+
+      fetch('https://raw.githubusercontent.com/joker63-in/Config/refs/heads/main/gdrive.json')
+        .then(response => {
+          if (!response.ok) throw new Error('File playlist.json tidak ditemukan.');
+          return response.json();
+        })
+        .then(data => {
+          playlist = data;
+          renderPlaylist();
+          savePlaylist();
+          if(showConfirmation) alert('Playlist dari file berhasil dimuat!');
+        })
+        .catch(error => {
+          console.error('Gagal memuat playlist default:', error);
+          if(showConfirmation) alert('Gagal memuat playlist.json. Pastikan file ada dan tidak error.');
+          renderPlaylist();
+        });
+    }
+
+    function handleKeyPress(e) {
+      if (document.activeElement.tagName === 'INPUT' && e.key !== 'Enter') return;
+
+      switch(e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (playlist.length > 0) {
+            selectedIndex = (selectedIndex + 1) % playlist.length;
+            document.getElementById(`item-${selectedIndex}`)?.focus();
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (playlist.length > 0) {
+            selectedIndex = (selectedIndex - 1 + playlist.length) % playlist.length;
+            document.getElementById(`item-${selectedIndex}`)?.focus();
+          }
+          break;
+        case 'Enter':
+          if (document.activeElement.classList.contains('playlist-item')) {
+            e.preventDefault();
+            playVideo(playlist[selectedIndex].id);
+          }
+          break;
+        case 'e': case 'E':
+           if (selectedIndex > -1 && playlist[selectedIndex] && document.activeElement.classList.contains('playlist-item')) {
+            e.preventDefault();
+            editVideo(selectedIndex, new Event('click'));
+          }
+          break;
+        case 'Delete':
+          if (selectedIndex > -1 && playlist[selectedIndex] && document.activeElement.classList.contains('playlist-item')) {
+            e.preventDefault();
+            deleteVideo(selectedIndex, new Event('click'));
+          }
+          break;
+      }
+    }
+
+    const bulanIndo = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const now = new Date();
+    document.getElementById("footerDate").textContent = bulanIndo[now.getMonth()] + " " + now.getFullYear();
+
+    loadFromStorage();
+    document.addEventListener('keydown', handleKeyPress);
+  </script>
+</body>
+</html>
